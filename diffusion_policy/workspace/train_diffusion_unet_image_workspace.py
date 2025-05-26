@@ -57,18 +57,21 @@ class TrainDiffusionUnetImageWorkspace(BaseWorkspace):
         # self.optimizer = hydra.utils.instantiate(
         #     cfg.optimizer, params=self.model.parameters())
 
-        obs_encorder_lr = cfg.optimizer.lr
+        # RGB parameters with reduced learning rate if pretrained
+        rgb_params = self.model.obs_encoder.get_rgb_params()
+        rgb_lr = cfg.optimizer.lr
         if cfg.policy.obs_encoder.pretrained:
-            obs_encorder_lr *= 0.1
-            print('==> reduce pretrained obs_encorder\'s lr')
-        obs_encorder_params = list()
-        for param in self.model.obs_encoder.parameters():
-            if param.requires_grad:
-                obs_encorder_params.append(param)
-        print(f'obs_encorder params: {len(obs_encorder_params)}')
+            rgb_lr *= 0.1
+            print('==> reduce pretrained RGB encoder\'s lr')
+
+        # Mask parameters with full learning rate
+        mask_params = self.model.obs_encoder.get_mask_params()
+        mask_lr = cfg.optimizer.lr  # Always use full learning rate for masks
+
         param_groups = [
             {'params': self.model.model.parameters()},
-            {'params': obs_encorder_params, 'lr': obs_encorder_lr}
+            {'params': rgb_params, 'lr': rgb_lr},
+            {'params': mask_params, 'lr': mask_lr}
         ]
         # self.optimizer = hydra.utils.instantiate(
         #     cfg.optimizer, params=param_groups)

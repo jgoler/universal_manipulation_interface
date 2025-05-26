@@ -264,7 +264,8 @@ class TimmObsEncoder(ModuleAttrMixin):
             assert img.shape[2:] == self.key_shape_map[key]
             img = img.reshape(B*T, *img.shape[2:])
             img = self.key_transform_map[key](img)
-            raw_feature = self.key_model_map[key](img)
+            key_encoder = self.key_model_map[key]
+            raw_feature = key_encoder(img)
             feature = self.aggregate_feature(raw_feature)
             assert len(feature.shape) == 2 and feature.shape[0] == B * T
             features.append(feature.reshape(B, -1))
